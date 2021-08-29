@@ -27,9 +27,9 @@
 //     
 
 // P2DAT
-//       +-----------------------+
-//       |D7 D6 D5 D4 D3 D2 D1 D0|
-// ------+                       +-------
+//       +--------------------------+
+//       | D7  D6 D5 D4 D3 D2 D1 D0 |
+// ------+                          +----
 
 //#define ADCLOCK  0 // clock 1/2 
 //#define ADCLOCK  1 // clock 1/2 
@@ -81,12 +81,11 @@ ISR (ADC_vect)
 }
      
 //-------------------------------    
-// the setup function runs once when you press reset or power the board
 void setup() {
   Serial.begin(115200);
-  FC_DDR |= (P1DAT_BIT + P2DAT_BIT);    // FAMICOM <-- MULTITAP
+  FC_DDR |= (P1DAT_BIT + P2DAT_BIT);    // FAMICOM <-- PADDLE
   FC_PORT |= (P1DAT_BIT + P2DAT_BIT );  //OUTPUT
-  FC_DDR &= ~(P1CLK_BIT + P2CLK_BIT);   // FAMICOM --> MULTITAP
+  FC_DDR &= ~(P1CLK_BIT + P2CLK_BIT);   // FAMICOM --> PADDLE
   FC_PORT |= (P1CLK_BIT + P2CLK_BIT + LATCH_BIT);  // PULLUP
 
   BUTTON_DDR  &= ~BUTTON_BIT;
@@ -111,7 +110,6 @@ void setup() {
 }
 
 //-------------------------------    
-
 void loop() {
   unsigned char bitcnt;
   unsigned char work;
@@ -142,12 +140,12 @@ void loop() {
 #else
     work = (1023 - adc0)>> 2;
 #endif
-//  バウスの上限／下限をチェック
+
 //    if(work < VALUE_MIN) work = VALUE_MIN;  // min
 //    if(work > VALUE_MAX) work = VALUE_MAX;  // max
     senddata = work;
 
-    //--- アルカノイドIIでバウスがワープする現象の対策    
+    //--- Arkanoid2でバウスがワープする現象の対策    
     if(senddata & 0x80){
       FC_PORT |= P2DAT_BIT;             // P2DAT=1
     }else{
@@ -158,7 +156,7 @@ void loop() {
 #endif 
     cli();
 
-    while((FC_PIN & LATCH_BIT)==0);  //LOAD待ち(LATCH中)
+    while((FC_PIN & LATCH_BIT)==0);  //LOAD待ち(LATCHING)
     // while(digitalRead(PINPS)==LOW);
 
     while((FC_PIN & LATCH_BIT)!=0);  //LATCH待ち(LOADING)
